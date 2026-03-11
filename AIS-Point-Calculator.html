@@ -88,6 +88,9 @@
     .menu-pt{font-size:17px;font-weight:900;color:var(--s5);min-width:46px;text-align:right;line-height:1;flex-shrink:0;}
     .menu-pt small{font-size:9px;font-weight:300;}
     .add-icon{width:22px;height:22px;border-radius:50%;border:1px solid var(--s3);color:var(--s4);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;transition:all .12s;}
+    .menu-item.is-selected{background:rgba(88,78,71,.08);border-left:3px solid var(--s5);}
+    .menu-item.is-selected .add-icon{background:var(--grad-active);border-color:transparent;color:var(--s0);font-size:12px;}
+    .menu-item.is-selected .menu-name{font-weight:700;}
 
     /* ===== EDIT MODE ===== */
     .menu-item-edit{padding:9px 12px;border-bottom:1px solid rgba(212,204,194,.4);background:rgba(255,255,255,.4);display:flex;align-items:center;gap:6px;}
@@ -363,7 +366,7 @@ var menuData=[
   {category:"フェイス",name:"かおバブ",points:30,price:4550,time:25}
 ];
 var defaultCourses=[{name:"ミニコース",points:130,fee:15070},{name:"ミニプラス",points:170,fee:18370},{name:"ライトコース",points:200,fee:26025},{name:"ライトプラス",points:240,fee:23925},{name:"ベーシックコース",points:280,fee:27280},{name:"ベーシックプラス",points:320,fee:35880},{name:"スタンダードコース",points:370,fee:33880},{name:"スタンダードプラス",points:410,fee:37180},{name:"プレミアムコース",points:450,fee:39380}];
-var courses=JSON.parse(localStorage.getItem('aisCourses')||'null')||JSON.parse(JSON.stringify(defaultCourses));
+var COURSES_VERSION='v2026-03-12';if(localStorage.getItem('aisCoursesVersion')!==COURSES_VERSION){localStorage.removeItem('aisCourses');localStorage.setItem('aisCoursesVersion',COURSES_VERSION);}var courses=JSON.parse(localStorage.getItem('aisCourses')||'null')||JSON.parse(JSON.stringify(defaultCourses));
 var visit1=[],visit2=[],activeVisit=1,selCat=null,searchQ='',parsedCSV=[],editMode=false;
 function getCats(){var s={},c=[];menuData.forEach(function(m){if(!s[m.category]){s[m.category]=1;c.push(m.category);}});return c;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -385,7 +388,7 @@ function renderMenu(){
     cats.forEach(function(cat){
       var items=f.filter(function(m){return m.category===cat;});
       if(!selCat&&q==='')h+='<div class="menu-sec-label">'+esc(cat)+'</div>';
-      items.forEach(function(m){var i=menuData.indexOf(m);h+='<div class="menu-item" data-idx="'+i+'"><div class="menu-info"><div class="menu-name">'+esc(m.name)+'</div><div class="menu-meta"><span>¥'+m.price.toLocaleString()+'</span><span>'+m.time+'分</span>'+(q!==''&&selCat===null?'<span>'+esc(m.category)+'</span>':'')+'</div></div><div class="menu-pt">'+m.points+'<small>pt</small></div><div class="add-icon">＋</div></div>';});
+      items.forEach(function(m){var i=menuData.indexOf(m);var sc=[].concat(visit1,visit2).filter(function(s){return s.name===m.name&&s.points===m.points;}).length;var isSel=sc>0;h+='<div class="menu-item'+(isSel?' is-selected':'')+'" data-idx="'+i+'"><div class="menu-info"><div class="menu-name">'+esc(m.name)+'</div><div class="menu-meta"><span>¥'+m.price.toLocaleString()+'</span><span>'+m.time+'分</span>'+(q!==''&&selCat===null?'<span>'+esc(m.category)+'</span>':'')+'</div></div><div class="menu-pt">'+m.points+'<small>pt</small></div><div class="add-icon">'+(isSel?'\u2713':'\uff0b')+'</div></div>';});
     });
   }
   el.innerHTML=h;
