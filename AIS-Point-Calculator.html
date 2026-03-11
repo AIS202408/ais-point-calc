@@ -211,7 +211,16 @@
     .btn-import{padding:7px 20px;border-radius:7px;border:none;background:var(--grad-active);color:var(--s0);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;box-shadow:var(--shadow-sm);transition:all .15s;}
     .btn-import:hover{opacity:.88;}
     .btn-import:disabled{opacity:.3;cursor:not-allowed;}
-    ::-webkit-scrollbar{width:3px;}
+    /* コース設定モーダル */
+    .course-row{display:grid;grid-template-columns:1fr 90px 100px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--s2);}
+    .course-row:last-child{border-bottom:none;}
+    .course-row-label{font-size:11px;font-weight:600;color:var(--s6);}
+    .course-row input{width:100%;padding:7px 10px;border:1px solid var(--s3);border-radius:8px;font-size:12px;font-family:'Noto Sans JP',sans-serif;color:var(--s6);background:rgba(255,255,255,.7);box-sizing:border-box;text-align:right;}
+    .course-row input:focus{outline:none;border-color:var(--s5);}
+    .cr-head{display:grid;grid-template-columns:1fr 90px 100px;gap:8px;padding:0 0 6px;margin-bottom:4px;border-bottom:2px solid var(--s3);}
+    .cr-head span{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--s4);text-align:right;}
+    .cr-head span:first-child{text-align:left;}
+        ::-webkit-scrollbar{width:3px;}
     ::-webkit-scrollbar-track{background:transparent;}
     ::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px;}
   </style>
@@ -269,6 +278,20 @@
     <button class="mnav-btn" id="mnav-result" data-target="panel-right">
       <span class="micon">🏷</span>結果
     </button>
+  </div>
+</div>
+
+<!-- コース設定モーダル -->
+<div class="modal-overlay" id="courseModal">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-icon">⚙️</div><div class="modal-title">コース設定</div></div>
+    <div class="modal-desc">各コースのポイント数と料金を設定してください。</div>
+    <div id="courseRows" style="margin-bottom:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="courseResetBtn" style="margin-right:auto;">リセット</button>
+      <button class="btn-cancel" id="courseCancelBtn">キャンセル</button>
+      <button class="btn-import" id="courseSaveBtn">保存</button>
+    </div>
   </div>
 </div>
 
@@ -367,14 +390,8 @@ var menuData=[
   {category:"処理剤",name:"FUHE LL",points:50,price:5700,time:10},
   {category:"フェイス",name:"かおバブ",points:30,price:4550,time:25}
 ];
-var courses=[
-  {name:"ミニコース",points:90,fee:9000},
-  {name:"ライトコース",points:150,fee:13500},
-  {name:"ベーシックコース",points:210,fee:17900},
-  {name:"スタンダードコース",points:270,fee:21300},
-  {name:"プレミアムコース",points:330,fee:25100}
-];
-var visit1=[],visit2=[],activeVisit=1,selCat=null,searchQ='',parsedCSV=[],editMode=false;
+var defaultCourses=[{name:"ミニコース",points:130,fee:15070},{name:"ミニプラス",points:170,fee:18370},{name:"ライトコース",points:200,fee:26025},{name:"ライトプラス",points:240,fee:23925},{name:"ベーシックコース",points:280,fee:27280},{name:"ベーシックプラス",points:320,fee:35880},{name:"スタンダードコース",points:370,fee:33880},{name:"スタンダードプラス",points:410,fee:37180},{name:"プレミアムコース",points:450,fee:39380}];
+var courses=JSON.parse(localStorage.getItem('aisCourses')||'null')||JSON.parse(JSON.stringify(defaultCourses));var visit1=[],visit2=[],activeVisit=1,selCat=null,searchQ='',parsedCSV=[],editMode=false;
 
 function getCats(){var s={},c=[];menuData.forEach(function(m){if(!s[m.category]){s[m.category]=1;c.push(m.category);}});return c;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -553,6 +570,31 @@ function executeImport(){if(!parsedCSV.length)return;menuData=parsedCSV;selCat=n
   document.getElementById('menuList').addEventListener('input',function(e){if(editMode)handleEditInput(e);});
   document.getElementById('selectedArea').addEventListener('click',function(e){var b=e.target.closest('.rm-btn');if(!b)return;removeMenu(parseFloat(b.dataset.uid),parseInt(b.dataset.visit));});
   document.getElementById('resultPanel').addEventListener('click',function(e){if(e.target&&e.target.id==='clearBtn')clearAll();});
+  // コース設定モーダル
+  function openCourseModal(){
+    var html='<div class="cr-head"><span>コース名</span><span>ポイント</span><span>料金(円)</span></div>';
+    courses.forEach(function(c,i){
+      html+='<div class="course-row"><div class="course-row-label">'+esc(c.name)+'</div><input type="number" min="1" data-ci="'+i+'" data-field="points" value="'+c.points+'"><input type="number" min="0" data-ci="'+i+'" data-field="fee" value="'+c.fee+'"></div>';
+    });
+    document.getElementById('courseRows').innerHTML=html;
+    document.getElementById('courseModal').style.display='flex';
+  }
+  function closeCourseModal(){document.getElementById('courseModal').style.display='none';}
+  function saveCourses(){
+    var inputs=document.querySelectorAll('#courseRows input');
+    inputs.forEach(function(inp){var i=parseInt(inp.dataset.ci),f=inp.dataset.field,v=parseInt(inp.value)||0;courses[i][f]=v;});
+    localStorage.setItem('aisCourses',JSON.stringify(courses));
+    closeCourseModal();renderResult();
+  }
+  document.getElementById('courseSettingBtn').addEventListener('click',openCourseModal);
+  document.getElementById('courseCancelBtn').addEventListener('click',closeCourseModal);
+  document.getElementById('courseModal').addEventListener('click',function(e){if(e.target===this)closeCourseModal();});
+  document.getElementById('courseResetBtn').addEventListener('click',function(){
+    courses=JSON.parse(JSON.stringify(defaultCourses));
+    localStorage.removeItem('aisCourses');
+    closeCourseModal();renderResult();
+  });
+  document.getElementById('courseSaveBtn').addEventListener('click',saveCourses);
 })();
 
 renderCats();renderMenu();renderSelected();renderResult();
