@@ -6,3 +6,499 @@
   <title>AIS ポイント計算機</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap" rel="stylesheet">
   <style>
+    :root {
+      /* Sandstone — 6段階の濃淡 */
+      --s0: #fdf9f5;   /* 最も薄い：ページ背景 */
+      --s1: #f7f2eb;   /* 薄い：パネル背景 */
+      --s2: #ece7e0;   /* Linen：カード・入力 */
+      --s3: #d4ccc2;   /* Sand：ボーダー */
+      --s4: #b0a699;   /* Stone：サブテキスト */
+      --s5: #857870;   /* Driftwood：アクセント・ボタン */
+      --s6: #584e47;   /* Umber：見出し・強調 */
+      --s7: #38302b;   /* 最も濃い：ごく一部の強調 */
+
+      --grad-header:  linear-gradient(135deg, #d4ccc2 0%, #e8e3da 45%, #f7f2eb 100%);
+      --grad-panel-l: linear-gradient(180deg, #f7f2eb 0%, #f0ebe3 100%);
+      --grad-panel-m: linear-gradient(180deg, #fdf9f5 0%, #f7f2eb 100%);
+      --grad-panel-r: linear-gradient(180deg, #f0ebe3 0%, #e8e3da 100%);
+      --grad-btn:     linear-gradient(135deg, #857870 0%, #b0a699 100%);
+      --grad-active:  linear-gradient(135deg, #584e47 0%, #857870 100%);
+      --grad-total:   linear-gradient(145deg, #d4ccc2 0%, #e2dbd4 45%, #ece7e0 100%);
+      --grad-savings: linear-gradient(135deg, #c8c0b6 0%, #d4ccc2 100%);
+      --grad-rec:     linear-gradient(135deg, #ece7e0 0%, #f4f0eb 100%);
+      --grad-silver:  linear-gradient(135deg, #f0ebe3 0%, #ddd8d0 50%, #ece7e0 100%);
+
+      --shadow-sm: 0 2px 10px rgba(88,78,71,.10);
+      --shadow-md: 0 5px 20px rgba(88,78,71,.14);
+      --shadow-lg: 0 10px 36px rgba(88,78,71,.18);
+    }
+
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Noto Sans JP',sans-serif;background:var(--s0);color:var(--s6);min-height:100vh;}
+
+    /* ===== HEADER ===== */
+    header{background:var(--grad-header);padding:0 24px;height:62px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100;box-shadow:0 3px 18px rgba(88,78,71,.15);border-bottom:1px solid var(--s3);}
+    .logo-badge{width:36px;height:36px;border-radius:10px;background:var(--grad-active);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--s0);letter-spacing:.5px;box-shadow:var(--shadow-sm);flex-shrink:0;}
+    .logo-name{font-size:15px;font-weight:900;color:var(--s6);letter-spacing:3px;}
+    .logo-sub{font-size:9px;font-weight:300;color:var(--s5);letter-spacing:3px;}
+    .h-sep{width:1px;height:28px;background:var(--s3);margin:0 6px;}
+    .spacer{flex:1;}
+    .hbtn{padding:7px 17px;border-radius:8px;border:1px solid var(--s3);background:rgba(255,255,255,.5);color:var(--s6);font-size:11px;font-weight:600;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .18s;backdrop-filter:blur(6px);}
+    .hbtn:hover{background:rgba(255,255,255,.8);border-color:var(--s4);box-shadow:var(--shadow-sm);}
+
+    /* ===== LAYOUT ===== */
+    .app{display:grid;grid-template-columns:300px 1fr 296px;height:calc(100vh - 62px);}
+    @media(max-width:900px){.app{grid-template-columns:1fr;height:auto;}}
+    .panel{overflow-y:auto;border-right:1px solid var(--s3);}
+    .panel:last-child{border-right:none;}
+    .panel-left{background:var(--grad-panel-l);}
+    .panel-mid{background:var(--grad-panel-m);}
+    .panel-right{background:var(--grad-panel-r);}
+
+    .panel-hd{padding:13px 18px;font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--s3);}
+    .panel-left  .panel-hd{background:linear-gradient(90deg,#d4ccc2,#e2dbd4);color:var(--s6);}
+    .panel-mid   .panel-hd{background:linear-gradient(90deg,#ddd8d0,#eae5de);color:var(--s6);}
+    .panel-right .panel-hd{background:linear-gradient(90deg,#cec6bc,#d8d0c8);color:var(--s6);}
+
+    /* ===== EDIT TOGGLE ===== */
+    .edit-toggle{font-size:10px;font-weight:600;padding:3px 11px;border-radius:5px;border:1px solid var(--s3);background:rgba(255,255,255,.6);color:var(--s5);cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .15s;text-transform:none;letter-spacing:.5px;}
+    .edit-toggle:hover{border-color:var(--s4);color:var(--s6);}
+    .edit-toggle.on{background:var(--grad-active);color:var(--s0);border-color:transparent;box-shadow:var(--shadow-sm);}
+
+    /* ===== CAT TABS ===== */
+    .cat-wrap{padding:10px 12px;background:rgba(255,255,255,.4);border-bottom:1px solid var(--s3);display:flex;flex-wrap:wrap;gap:5px;position:sticky;top:43px;z-index:9;}
+    .cat-btn{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--s3);background:rgba(255,255,255,.6);color:var(--s5);transition:all .14s;font-family:'Noto Sans JP',sans-serif;}
+    .cat-btn:hover{border-color:var(--s4);color:var(--s6);background:rgba(255,255,255,.9);}
+    .cat-btn.active{background:var(--grad-active);color:var(--s0);border-color:transparent;box-shadow:var(--shadow-sm);}
+
+    /* ===== SEARCH ===== */
+    .search-wrap{padding:9px 12px;background:rgba(255,255,255,.35);border-bottom:1px solid var(--s3);position:sticky;top:88px;z-index:8;}
+    .search-input{width:100%;padding:7px 14px;border-radius:20px;border:1px solid var(--s3);background:rgba(255,255,255,.7);font-size:12px;font-family:'Noto Sans JP',sans-serif;color:var(--s6);outline:none;transition:all .15s;}
+    .search-input::placeholder{color:var(--s4);}
+    .search-input:focus{border-color:var(--s4);background:rgba(255,255,255,.95);box-shadow:0 0 0 3px rgba(133,120,112,.1);}
+
+    /* ===== MENU ===== */
+    .menu-sec-label{padding:9px 16px 4px;font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--s4);}
+    .menu-item{display:flex;align-items:center;padding:10px 14px;cursor:pointer;border-bottom:1px solid rgba(212,204,194,.4);background:transparent;transition:background .12s;gap:8px;}
+    .menu-item:hover{background:rgba(212,204,194,.28);}
+    .menu-item:hover .add-icon{border-color:var(--s5);color:var(--s5);}
+    .menu-info{flex:1;min-width:0;}
+    .menu-name{font-size:12px;font-weight:500;color:var(--s6);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .menu-meta{font-size:10px;color:var(--s4);display:flex;gap:8px;}
+    .menu-pt{font-size:17px;font-weight:900;color:var(--s5);min-width:46px;text-align:right;line-height:1;flex-shrink:0;}
+    .menu-pt small{font-size:9px;font-weight:300;}
+    .add-icon{width:22px;height:22px;border-radius:50%;border:1px solid var(--s3);color:var(--s4);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;transition:all .12s;}
+
+    /* ===== EDIT MODE ===== */
+    .menu-item-edit{padding:9px 12px;border-bottom:1px solid rgba(212,204,194,.4);background:rgba(255,255,255,.4);display:flex;align-items:center;gap:6px;}
+    .edit-fields{flex:1;display:grid;grid-template-columns:1fr 72px 60px 52px;gap:5px;}
+    .ef-wrap{display:flex;flex-direction:column;}
+    .ef-label{font-size:9px;color:var(--s4);letter-spacing:.5px;margin-bottom:2px;}
+    .ef{padding:5px 8px;border-radius:5px;border:1px solid var(--s3);background:rgba(255,255,255,.8);font-size:11px;font-family:'Noto Sans JP',sans-serif;color:var(--s6);outline:none;width:100%;transition:border-color .13s;}
+    .ef:focus{border-color:var(--s4);}
+    .del-btn{width:24px;height:24px;border-radius:5px;border:1px solid var(--s3);background:rgba(255,255,255,.6);color:var(--s4);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .13s;}
+    .del-btn:hover{border-color:var(--s5);color:var(--s6);background:var(--s2);}
+    .add-row-wrap{padding:7px 12px;border-bottom:1px solid rgba(212,204,194,.4);}
+    .add-row-btn{width:100%;padding:7px;border-radius:7px;border:1px dashed var(--s3);background:transparent;color:var(--s4);font-size:11px;font-weight:500;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .13s;letter-spacing:.5px;}
+    .add-row-btn:hover{border-color:var(--s4);color:var(--s5);background:rgba(255,255,255,.5);}
+
+    /* ===== VISIT TABS ===== */
+    .visit-tabs{display:flex;gap:8px;padding:10px 12px;background:rgba(255,255,255,.35);border-bottom:1px solid var(--s3);position:sticky;top:43px;z-index:9;}
+    .visit-tab{flex:1;padding:8px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--s3);background:rgba(255,255,255,.6);color:var(--s5);font-family:'Noto Sans JP',sans-serif;transition:all .15s;letter-spacing:.5px;}
+    .visit-tab:hover{border-color:var(--s4);color:var(--s6);}
+    .visit-tab.active{background:var(--grad-active);color:var(--s0);border-color:transparent;box-shadow:var(--shadow-sm);}
+
+    /* ===== SELECTED ===== */
+    .selected-area{padding:12px;}
+    .empty-msg{text-align:center;padding:50px 16px;color:var(--s4);font-size:12px;font-weight:300;line-height:2.6;}
+    .empty-icon{font-size:24px;opacity:.3;margin-bottom:8px;letter-spacing:6px;}
+    .v-label{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--s4);margin:10px 3px 7px;padding-bottom:5px;border-bottom:1px solid var(--s3);}
+    .sel-item{display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:5px;border-radius:9px;background:rgba(255,255,255,.7);border:1px solid var(--s3);box-shadow:var(--shadow-sm);animation:fadeUp .16s ease;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+    .v-badge{width:20px;height:20px;border-radius:50%;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .b1{background:var(--grad-active);color:var(--s0);}
+    .b2{background:var(--grad-btn);color:var(--s0);}
+    .sel-name{flex:1;font-size:12px;font-weight:400;color:var(--s6);}
+    .sel-pt{font-size:13px;font-weight:700;color:var(--s5);flex-shrink:0;}
+    .rm-btn{background:none;border:none;cursor:pointer;color:var(--s3);font-size:16px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0;}
+    .rm-btn:hover{background:var(--s2);color:var(--s6);}
+
+    /* ===== RESULT ===== */
+    .result-inner{padding:16px;}
+    .empty-msg-r{text-align:center;padding:56px 16px;color:var(--s4);font-size:12px;font-weight:300;line-height:2.6;}
+
+    .total-card{border-radius:16px;padding:22px 18px;text-align:center;margin-bottom:12px;background:var(--grad-total);border:1px solid var(--s3);box-shadow:var(--shadow-md);position:relative;overflow:hidden;}
+    .total-card::before{content:'';position:absolute;top:-26px;right:-26px;width:88px;height:88px;border-radius:50%;background:rgba(255,255,255,.32);}
+    .total-card::after{content:'';position:absolute;bottom:-16px;left:-16px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.2);}
+    .tc-label{font-size:9px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--s5);margin-bottom:7px;}
+    .tc-pts{font-size:62px;font-weight:900;color:var(--s6);line-height:1;margin-bottom:2px;}
+    .tc-pts small{font-size:16px;font-weight:300;}
+    .tc-sub{font-size:11px;color:var(--s5);margin-top:5px;}
+
+    .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+    .stat-box{border-radius:10px;padding:10px 12px;background:var(--grad-silver);border:1px solid var(--s3);box-shadow:var(--shadow-sm);}
+    .stat-box:first-child{background:linear-gradient(135deg,#ddd8d0,#ece7e0);}
+    .stat-box:last-child{background:linear-gradient(135deg,#cec6bc,#ddd8d0);}
+    .sb-label{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--s4);margin-bottom:3px;}
+    .sb-val{font-size:21px;font-weight:900;color:var(--s6);line-height:1;}
+    .sb-val small{font-size:10px;font-weight:300;}
+
+    .savings-card{border-radius:12px;padding:13px 16px;margin-bottom:12px;background:var(--grad-savings);border:1px solid var(--s4);text-align:center;box-shadow:var(--shadow-sm);}
+    .sv-label{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--s5);margin-bottom:5px;}
+    .sv-amt{font-size:34px;font-weight:900;color:var(--s6);line-height:1;}
+    .sv-sub{font-size:10px;color:var(--s5);margin-top:4px;letter-spacing:1px;}
+
+    .over-card{border-radius:9px;padding:10px 14px;margin-bottom:12px;background:var(--s2);border:1px solid var(--s4);color:var(--s5);font-size:11px;text-align:center;}
+
+    .sec-label{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--s4);margin:4px 0 9px;padding-bottom:5px;border-bottom:1px solid var(--s3);}
+
+    /* コースカード：濃淡で差をつける */
+    .course-card{border-radius:10px;padding:10px 13px;margin-bottom:7px;border:1px solid var(--s3);transition:box-shadow .14s;}
+    .course-card:nth-child(1){background:rgba(255,255,255,.55);}
+    .course-card:nth-child(2){background:linear-gradient(135deg,rgba(255,255,255,.4),var(--s2));}
+    .course-card:nth-child(3){background:linear-gradient(135deg,var(--s2),var(--s3));}
+    .course-card:nth-child(4){background:linear-gradient(135deg,var(--s3),#c4bdb3);border-color:var(--s4);}
+    .course-card:nth-child(5){background:linear-gradient(135deg,#c0b8ae,#b4aca2);border-color:var(--s4);}
+    .course-card:nth-child(4) .cc-name,
+    .course-card:nth-child(5) .cc-name{color:var(--s0);}
+    .course-card:nth-child(4) .cc-pts,
+    .course-card:nth-child(5) .cc-pts{color:rgba(255,255,255,.65);}
+    .course-card:nth-child(4) .cc-fee,
+    .course-card:nth-child(5) .cc-fee{color:var(--s0);}
+    .course-card.rec{box-shadow:var(--shadow-md);}
+    .cc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+    .cc-name{font-size:12px;font-weight:700;color:var(--s6);}
+    .rec-badge{font-size:8px;font-weight:700;letter-spacing:.5px;background:var(--grad-active);color:var(--s0);padding:2px 10px;border-radius:20px;}
+    .cc-btm{display:flex;justify-content:space-between;align-items:center;}
+    .cc-pts{font-size:10px;color:var(--s4);}
+    .cc-fee{font-size:16px;font-weight:900;color:var(--s5);}
+    .cc-fee small{font-size:10px;font-weight:300;}
+    .cc-save{font-size:10px;color:var(--s5);margin-top:2px;}
+    .cc-over{font-size:10px;color:var(--s4);margin-top:2px;}
+
+    .clear-btn{width:100%;padding:10px;border-radius:8px;border:1px solid var(--s3);background:rgba(255,255,255,.5);color:var(--s4);font-size:11px;font-weight:500;cursor:pointer;margin-top:10px;font-family:'Noto Sans JP',sans-serif;transition:all .15s;}
+    .clear-btn:hover{border-color:var(--s4);color:var(--s6);background:rgba(255,255,255,.8);}
+
+    /* ===== MODAL ===== */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(56,48,43,.35);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);}
+    .modal-overlay.open{display:flex;}
+    .modal{background:var(--s1);border-radius:20px;padding:28px;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;box-shadow:0 24px 56px rgba(56,48,43,.22);border:1px solid var(--s3);}
+    .modal-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+    .modal-icon{width:36px;height:36px;border-radius:10px;background:var(--grad-active);display:flex;align-items:center;justify-content:center;font-size:17px;}
+    .modal-title{font-size:17px;font-weight:700;color:var(--s6);}
+    .modal-desc{font-size:11px;color:var(--s4);line-height:1.9;margin-bottom:18px;font-weight:300;}
+    .drop-zone{border:2px dashed var(--s3);border-radius:14px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .18s;margin-bottom:14px;background:rgba(255,255,255,.4);}
+    .drop-zone:hover,.drop-zone.dragover{border-color:var(--s4);background:rgba(255,255,255,.7);}
+    .drop-icon{font-size:26px;margin-bottom:7px;opacity:.4;}
+    .drop-text{font-size:13px;font-weight:500;color:var(--s5);}
+    .drop-sub{font-size:10px;color:var(--s4);margin-top:3px;}
+    .format-box{background:rgba(255,255,255,.5);border-radius:10px;border:1px solid var(--s3);padding:11px 13px;margin-bottom:14px;}
+    .fmt-label{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--s4);text-transform:uppercase;margin-bottom:5px;}
+    .fmt-code{font-size:11px;color:var(--s6);font-family:monospace;line-height:2;}
+    .preview-count{font-size:12px;font-weight:500;color:var(--s6);margin-bottom:7px;}
+    .preview-scroll{max-height:180px;overflow-y:auto;border-radius:8px;border:1px solid var(--s3);margin-bottom:6px;}
+    .preview-table{width:100%;border-collapse:collapse;font-size:11px;}
+    .preview-table th{padding:6px 10px;background:var(--s2);color:var(--s5);text-align:left;font-weight:600;position:sticky;top:0;}
+    .preview-table td{padding:5px 10px;border-top:1px solid var(--s2);color:var(--s6);}
+    .modal-error{background:var(--s2);border:1px solid var(--s3);border-radius:8px;padding:9px 13px;font-size:11px;color:var(--s5);margin-bottom:11px;}
+    .modal-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:16px;}
+    .btn-cancel{padding:8px 18px;border-radius:8px;border:1px solid var(--s3);background:rgba(255,255,255,.6);color:var(--s5);font-size:12px;font-weight:500;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .14s;}
+    .btn-cancel:hover{border-color:var(--s4);color:var(--s6);}
+    .btn-import{padding:8px 22px;border-radius:8px;border:none;background:var(--grad-active);color:var(--s0);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;letter-spacing:.5px;box-shadow:var(--shadow-sm);transition:all .15s;}
+    .btn-import:hover{opacity:.88;transform:translateY(-1px);}
+    .btn-import:disabled{opacity:.3;cursor:not-allowed;transform:none;}
+    /* コース設定モーダル */
+    .course-row{display:grid;grid-template-columns:1fr 90px 100px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--s2);}
+    .course-row:last-child{border-bottom:none;}
+    .course-row-label{font-size:11px;font-weight:600;color:var(--s6);}
+    .course-row input{width:100%;padding:7px 10px;border:1px solid var(--s3);border-radius:8px;font-size:12px;font-family:'Noto Sans JP',sans-serif;color:var(--s6);background:rgba(255,255,255,.7);box-sizing:border-box;text-align:right;}
+    .course-row input:focus{outline:none;border-color:var(--s5);}
+    .cr-head{display:grid;grid-template-columns:1fr 90px 100px;gap:8px;padding:0 0 6px;margin-bottom:4px;border-bottom:2px solid var(--s3);}
+    .cr-head span{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--s4);text-align:right;}
+    .cr-head span:first-child{text-align:left;}
+    ::-webkit-scrollbar{width:3px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    ::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px;}
+  </style>
+</head>
+<body>
+<header>
+  <div class="logo-badge">AIS</div>
+  <div style="display:flex;flex-direction:column;gap:1px;">
+    <div class="logo-name">POINT</div>
+    <div class="logo-sub">計算機</div>
+  </div>
+  <div class="h-sep"></div>
+  <div class="spacer"></div>
+  <button class="hbtn" id="courseSettingBtn">⚙️ コース設定</button>
+  <button class="hbtn" id="csvOpenBtn">📂 CSV 読み込み</button>
+</header>
+
+<div class="modal-overlay" id="csvModal">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-icon">📂</div><div class="modal-title">CSV 読み込み</div></div>
+    <div class="modal-desc">CSVファイルを選択するか、ドラッグ＆ドロップしてください。<br>読み込むと現在のメニューデータが上書きされます。</div>
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-icon">📄</div>
+      <div class="drop-text" id="dropText">クリックしてファイルを選択</div>
+      <div class="drop-sub">または CSV をドラッグ＆ドロップ</div>
+    </div>
+    <input type="file" id="csvFileInput" accept=".csv" style="display:none">
+    <div class="format-box">
+      <div class="fmt-label">CSV フォーマット（1行目はヘッダー行）</div>
+      <div class="fmt-code">カテゴリ名, メニュー名, ポイント, 定価, 施術時間（分）<br>例：カラー, フルカラー, 60, 9800, 60</div>
+    </div>
+    <div id="csvError" style="display:none" class="modal-error"></div>
+    <div id="csvPreview" style="display:none">
+      <div class="preview-count" id="previewCount"></div>
+      <div class="preview-scroll"><table class="preview-table"><thead><tr><th>カテゴリ</th><th>メニュー名</th><th>pt</th><th>定価</th><th>時間</th></tr></thead><tbody id="previewBody"></tbody></table></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="csvCancelBtn">キャンセル</button>
+      <button class="btn-import" id="importBtn" disabled>読み込む</button>
+    </div>
+  </div>
+</div>
+
+<!-- コース設定モーダル -->
+<div class="modal-overlay" id="courseModal">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-icon">⚙️</div><div class="modal-title">コース設定</div></div>
+    <div class="modal-desc">各コースのポイント数と料金を設定してください。</div>
+    <div id="courseRows" style="margin-bottom:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="courseResetBtn" style="margin-right:auto;">リセット</button>
+      <button class="btn-cancel" id="courseCancelBtn">キャンセル</button>
+      <button class="btn-import" id="courseSaveBtn">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <div class="panel panel-left">
+    <div class="panel-hd"><span>メニューを選ぶ</span><button class="edit-toggle" id="editToggle">編集</button></div>
+    <div class="cat-wrap" id="catWrap"></div>
+    <div class="search-wrap" id="searchWrap"><input class="search-input" type="text" placeholder="メニューを検索..." id="searchInput"></div>
+    <div id="menuList"></div>
+  </div>
+  <div class="panel panel-mid">
+    <div class="panel-hd"><span>選択中のメニュー</span></div>
+    <div class="visit-tabs"><button class="visit-tab active" id="tab1">1 回 目</button><button class="visit-tab" id="tab2">2 回 目</button></div>
+    <div class="selected-area" id="selectedArea"></div>
+  </div>
+  <div class="panel panel-right">
+    <div class="panel-hd"><span>計算結果</span></div>
+    <div class="result-inner" id="resultPanel"></div>
+  </div>
+</div>
+
+<script>
+var menuData=[
+  {category:"共通",name:"シャンプーブロー",points:30,price:3400,time:40},
+  {category:"共通",name:"シャンプーブローMen's",points:30,price:3400,time:25},
+  {category:"カット",name:"カット",points:25,price:3400,time:20},
+  {category:"カット",name:"メンテナンスカット",points:15,price:2200,time:15},
+  {category:"カット",name:"眉カット",points:5,price:1150,time:5},
+  {category:"カラー",name:"リタッチカラー",points:40,price:6800,time:25},
+  {category:"カラー",name:"エリアカラー",points:30,price:4550,time:20},
+  {category:"カラー",name:"ニュアンスカラー",points:30,price:4550,time:20},
+  {category:"カラー",name:"機能性カラー",points:30,price:4550,time:20},
+  {category:"カラー",name:"メイキングカラーS",points:50,price:7950,time:35},
+  {category:"カラー",name:"メイキングカラーM",points:55,price:8500,time:40},
+  {category:"カラー",name:"メイキングカラーL",points:60,price:9100,time:45},
+  {category:"ケア",name:"システムトリートメント",points:35,price:5700,time:20},
+  {category:"ケア",name:"マイナステントリートメントMen's",points:85,price:13600,time:45},
+  {category:"ケア",name:"マイナステントリートメントS",points:85,price:13600,time:60},
+  {category:"ケア",name:"マイナステントリートメントB",points:90,price:14750,time:65},
+  {category:"ケア",name:"マイナステントリートメントM",points:100,price:15900,time:70},
+  {category:"ケア",name:"マイナステントリートメントL",points:105,price:17000,time:75},
+  {category:"ケア",name:"マイナステントリートメントLL",points:135,price:21000,time:100},
+  {category:"ケア",name:"マイクロバブル",points:30,price:4550,time:15},
+  {category:"SPA",name:"ヘッドスパ(ショート）",points:20,price:3400,time:20},
+  {category:"SPA",name:"ヘッドスパ（レギュラー）",points:35,price:5700,time:25},
+  {category:"SPA",name:"ヘッドスパ（オーガニック）",points:40,price:6800,time:25},
+  {category:"SPA",name:"ルイスSPA（プレミアム）",points:50,price:7425,time:25},
+  {category:"SPA",name:"ルイスSPA（スペシャル）",points:35,price:5500,time:25},
+  {category:"SPA",name:"ルイスSPA",points:25,price:3740,time:20},
+  {category:"SPA",name:"リバイブスパ",points:40,price:6600,time:25},
+  {category:"ストレートパーマ",name:"メタバーサルストレートS",points:100,price:15900,time:60},
+  {category:"ストレートパーマ",name:"メタバーサルストレートM",points:110,price:17000,time:80},
+  {category:"ストレートパーマ",name:"メタバーサルストレートL",points:115,price:18150,time:100},
+  {category:"ストレートパーマ",name:"メタバーサルストレートLL",points:120,price:19250,time:110},
+  {category:"ストレートパーマ",name:"メタバーサルストレート(セクションS）",points:70,price:11350,time:50},
+  {category:"ストレートパーマ",name:"メタバーサルストレート(セクションM）",points:80,price:12500,time:60},
+  {category:"ストレートパーマ",name:"メタバーサルストレート(セクションL）",points:85,price:13600,time:70},
+  {category:"ストレートパーマ",name:"メタバーサルストレート(セクションLL）",points:90,price:14500,time:90},
+  {category:"ストレートパーマ",name:"メタバーサルストレート（前髪）",points:50,price:7950,time:40},
+  {category:"ストレートパーマ",name:"縮毛矯正S",points:100,price:15900,time:60},
+  {category:"ストレートパーマ",name:"縮毛矯正M",points:110,price:17000,time:80},
+  {category:"ストレートパーマ",name:"縮毛矯正L",points:115,price:18150,time:100},
+  {category:"ストレートパーマ",name:"縮毛矯正LL",points:120,price:19250,time:110},
+  {category:"ストレートパーマ",name:"縮毛矯正(セクションS）",points:70,price:11350,time:50},
+  {category:"ストレートパーマ",name:"縮毛矯正(セクションM）",points:80,price:12500,time:60},
+  {category:"ストレートパーマ",name:"縮毛矯正(セクションL）",points:85,price:13600,time:70},
+  {category:"ストレートパーマ",name:"縮毛矯正(セクションLL）",points:90,price:14500,time:90},
+  {category:"ストレートパーマ",name:"縮毛矯正（前髪）",points:50,price:7950,time:40},
+  {category:"パーマ",name:"真酸性パーマ",points:80,price:12500,time:90},
+  {category:"パーマ",name:"真酸性パーマ（ポイント）",points:45,price:6800,time:40},
+  {category:"パーマ",name:"ノンアルカリパーマ",points:80,price:12500,time:90},
+  {category:"パーマ",name:"ポイントパーマ",points:45,price:6800,time:40},
+  {category:"メタバーサル",name:"メタバーサルカール",points:100,price:15900,time:70},
+  {category:"メタバーサル",name:"メタバーサルカール（セクション）",points:70,price:11350,time:60},
+  {category:"メタバーサル",name:"メタバーサル髪質改善M",points:100,price:15900,time:90},
+  {category:"メタバーサル",name:"メタバーサル髪質改善L",points:105,price:17000,time:100},
+  {category:"形状変化",name:"ストレートタッチ",points:70,price:12100,time:60},
+  {category:"形状変化",name:"ボリュームタッチ",points:80,price:13200,time:65},
+  {category:"形状変化",name:"ウェーブタッチ",points:90,price:14300,time:75},
+  {category:"処理剤",name:"活性酸素除去カラーS~M",points:35,price:4950,time:10},
+  {category:"処理剤",name:"活性酸素除去カラーL~LL",points:40,price:6050,time:10},
+  {category:"処理剤",name:"ヤクジョZERO",points:10,price:1150,time:5},
+  {category:"処理剤",name:"ヤクジョW",points:20,price:2300,time:10},
+  {category:"処理剤",name:"ヤクジョFULL",points:35,price:5700,time:15},
+  {category:"処理剤",name:"メタバーサル処理剤",points:20,price:3300,time:5},
+  {category:"処理剤",name:"FUHE S",points:35,price:5700,time:5},
+  {category:"処理剤",name:"FUHE M",points:40,price:5700,time:10},
+  {category:"処理剤",name:"FUHE L",points:45,price:5700,time:10},
+  {category:"処理剤",name:"FUHE LL",points:50,price:5700,time:10},
+  {category:"フェイス",name:"かおバブ",points:30,price:4550,time:25}
+];
+var defaultCourses=[{name:"ミニコース",points:130,fee:15070},{name:"ミニプラス",points:170,fee:18370},{name:"ライトコース",points:200,fee:26025},{name:"ライトプラス",points:240,fee:23925},{name:"ベーシックコース",points:280,fee:27280},{name:"ベーシックプラス",points:320,fee:35880},{name:"スタンダードコース",points:370,fee:33880},{name:"スタンダードプラス",points:410,fee:37180},{name:"プレミアムコース",points:450,fee:39380}];
+var courses=JSON.parse(localStorage.getItem('aisCourses')||'null')||JSON.parse(JSON.stringify(defaultCourses));
+var visit1=[],visit2=[],activeVisit=1,selCat=null,searchQ='',parsedCSV=[],editMode=false;
+function getCats(){var s={},c=[];menuData.forEach(function(m){if(!s[m.category]){s[m.category]=1;c.push(m.category);}});return c;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function renderCats(){var h='<button class="cat-btn'+(selCat===null?' active':'')+'" data-cat="">全て</button>';getCats().forEach(function(c){h+='<button class="cat-btn'+(selCat===c?' active':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'</button>';});document.getElementById('catWrap').innerHTML=h;}
+function renderMenu(){
+  var el=document.getElementById('menuList'),q=searchQ.trim(),h='';
+  if(editMode){
+    getCats().forEach(function(cat){
+      var items=menuData.filter(function(m){return m.category===cat;});
+      h+='<div class="menu-sec-label">'+esc(cat)+'</div>';
+      items.forEach(function(m){var i=menuData.indexOf(m);h+='<div class="menu-item-edit"><div class="edit-fields"><div class="ef-wrap"><div class="ef-label">メニュー名</div><input class="ef" type="text" data-idx="'+i+'" data-field="name" value="'+esc(m.name)+'"></div><div class="ef-wrap"><div class="ef-label">定価(¥)</div><input class="ef" type="number" data-idx="'+i+'" data-field="price" value="'+m.price+'"></div><div class="ef-wrap"><div class="ef-label">時間(分)</div><input class="ef" type="number" data-idx="'+i+'" data-field="time" value="'+m.time+'"></div><div class="ef-wrap"><div class="ef-label">ポイント</div><input class="ef" type="number" data-idx="'+i+'" data-field="points" value="'+m.points+'"></div></div><button class="del-btn" data-del="'+i+'">×</button></div>';});
+      h+='<div class="add-row-wrap"><button class="add-row-btn" data-addcat="'+esc(cat)+'">＋ '+esc(cat)+' にメニューを追加</button></div>';
+    });
+    h+='<div class="add-row-wrap"><button class="add-row-btn" data-addcat="__new__">＋ 新しいカテゴリを追加</button></div>';
+  } else {
+    var f=menuData.filter(function(m){return(selCat===null||m.category===selCat)&&(q===''||m.name.indexOf(q)>=0||m.category.indexOf(q)>=0);});
+    if(!f.length){el.innerHTML='<div class="empty-msg"><div class="empty-icon">— — —</div>見つかりませんでした</div>';return;}
+    var cats=[];f.forEach(function(m){if(cats.indexOf(m.category)<0)cats.push(m.category);});
+    cats.forEach(function(cat){
+      var items=f.filter(function(m){return m.category===cat;});
+      if(!selCat&&q==='')h+='<div class="menu-sec-label">'+esc(cat)+'</div>';
+      items.forEach(function(m){var i=menuData.indexOf(m);h+='<div class="menu-item" data-idx="'+i+'"><div class="menu-info"><div class="menu-name">'+esc(m.name)+'</div><div class="menu-meta"><span>¥'+m.price.toLocaleString()+'</span><span>'+m.time+'分</span>'+(q!==''&&selCat===null?'<span>'+esc(m.category)+'</span>':'')+'</div></div><div class="menu-pt">'+m.points+'<small>pt</small></div><div class="add-icon">＋</div></div>';});
+    });
+  }
+  el.innerHTML=h;
+}
+function renderSelected(){
+  var el=document.getElementById('selectedArea'),h='';
+  if(!visit1.length&&!visit2.length){el.innerHTML='<div class="empty-msg"><div class="empty-icon">— — —</div>左のメニューから<br>施術を追加してください</div>';return;}
+  if(visit1.length){h+='<div class="v-label">1 回 目</div>';visit1.forEach(function(m){h+='<div class="sel-item"><div class="v-badge b1">1</div><div class="sel-name">'+esc(m.name)+'</div><div class="sel-pt">'+m.points+'pt</div><button class="rm-btn" data-uid="'+m.uid+'" data-visit="1">×</button></div>';});}
+  if(visit2.length){h+='<div class="v-label"'+(visit1.length?' style="margin-top:14px"':'')+'>2 回 目</div>';visit2.forEach(function(m){h+='<div class="sel-item"><div class="v-badge b2">2</div><div class="sel-name">'+esc(m.name)+'</div><div class="sel-pt">'+m.points+'pt</div><button class="rm-btn" data-uid="'+m.uid+'" data-visit="2">×</button></div>';});}
+  el.innerHTML=h;
+}
+function renderResult(){
+  var el=document.getElementById('resultPanel');
+  var v1p=0,v1r=0,v1t=0,v2p=0,v2r=0,v2t=0;
+  visit1.forEach(function(m){v1p+=m.points;v1r+=m.price;v1t+=m.time;});
+  visit2.forEach(function(m){v2p+=m.points;v2r+=m.price;v2t+=m.time;});
+  var total=v1p+v2p,tp=v1r+v2r,tt=v1t+v2t;
+  if(!total){el.innerHTML='<div class="empty-msg-r"><div class="empty-icon">— — —</div>メニューを選ぶと<br>ここに結果が表示されます</div>';return;}
+  var rec=courses[courses.length-1];
+  for(var i=0;i<courses.length;i++){if(courses[i].points>=total){rec=courses[i];break;}}
+  var sav=tp-rec.fee,over=total>courses[courses.length-1].points,h='';
+  h+='<div class="total-card"><div class="tc-label">合計ポイント</div><div class="tc-pts">'+total+'<small> pt</small></div><div class="tc-sub">定価合計 ¥'+tp.toLocaleString()+'　／　'+tt+'分</div></div>';
+  if(visit2.length)h+='<div class="stat-row"><div class="stat-box"><div class="sb-label">1 回 目</div><div class="sb-val">'+v1p+'<small> pt</small></div></div><div class="stat-box"><div class="sb-label">2 回 目</div><div class="sb-val">'+v2p+'<small> pt</small></div></div></div>';
+  if(sav>0&&!over)h+='<div class="savings-card"><div class="sv-label">コース利用でお得な金額</div><div class="sv-amt">¥'+sav.toLocaleString()+'</div><div class="sv-sub">— お得 —</div></div>';
+  if(over)h+='<div class="over-card">プレミアムコース（'+courses[courses.length-1].points+'pt）を超えています</div>';
+  h+='<div class="sec-label">コース一覧</div>';
+  courses.forEach(function(c){var isR=c===rec,s=tp-c.fee,sh=c.points<total;h+='<div class="course-card'+(isR?' rec':'')+'"><div class="cc-top"><span class="cc-name">'+c.name+'</span>'+(isR?'<span class="rec-badge">おすすめ</span>':'')+'</div><div class="cc-btm"><span class="cc-pts">'+c.points+'pt まで</span><span class="cc-fee">¥'+c.fee.toLocaleString()+'<small>/月</small></span></div>'+(isR&&s>0?'<div class="cc-save">¥'+s.toLocaleString()+' お得</div>':'')+(sh?'<div class="cc-over">'+(total-c.points)+'pt 超過</div>':'')+'</div>';});
+  h+='<button class="clear-btn" id="clearBtn">すべてクリア</button>';
+  el.innerHTML=h;
+}
+function addMenu(i){var m=Object.assign({},menuData[i],{uid:Date.now()+Math.random()});if(activeVisit===1)visit1.push(m);else visit2.push(m);renderSelected();renderResult();}
+function removeMenu(uid,v){if(v===1)visit1=visit1.filter(function(m){return m.uid!==uid;});else visit2=visit2.filter(function(m){return m.uid!==uid;});renderSelected();renderResult();}
+function clearAll(){visit1=[];visit2=[];renderSelected();renderResult();}
+function toggleEdit(){editMode=!editMode;var b=document.getElementById('editToggle');b.textContent=editMode?'完了':'編集';b.className='edit-toggle'+(editMode?' on':'');document.getElementById('searchWrap').style.display=editMode?'none':'block';renderMenu();}
+function handleEditInput(e){var el=e.target;if(!el.classList.contains('ef'))return;var i=parseInt(el.dataset.idx),f=el.dataset.field,v=el.value;if(f==='name')menuData[i].name=v;else if(f==='price')menuData[i].price=parseInt(v)||0;else if(f==='time')menuData[i].time=parseInt(v)||0;else if(f==='points')menuData[i].points=parseInt(v)||0;}
+function handleEditClick(e){
+  var d=e.target.closest('[data-del]');if(d){menuData.splice(parseInt(d.dataset.del),1);renderMenu();return;}
+  var a=e.target.closest('[data-addcat]');if(a){var cat=a.dataset.addcat;if(cat==='__new__'){cat=prompt('新しいカテゴリ名:');if(!cat||!cat.trim())return;cat=cat.trim();}menuData.push({category:cat,name:'新しいメニュー',points:0,price:0,time:0});renderMenu();setTimeout(function(){var inp=document.querySelectorAll('.ef[data-field="name"]');if(inp.length)inp[inp.length-1].focus();},50);}
+}
+function openModal(){document.getElementById('csvModal').classList.add('open');resetModal();}
+function closeModal(){document.getElementById('csvModal').classList.remove('open');}
+function resetModal(){parsedCSV=[];document.getElementById('csvError').style.display='none';document.getElementById('csvPreview').style.display='none';document.getElementById('importBtn').disabled=true;document.getElementById('dropText').textContent='クリックしてファイルを選択';document.getElementById('csvFileInput').value='';}
+function parseLine(l){var r=[],c='',q=false;for(var i=0;i<l.length;i++){var ch=l[i];if(ch==='"'){q=!q;}else if(ch===','&&!q){r.push(c);c='';}else c+=ch;}r.push(c);return r;}
+function processFile(file){
+  if(!file.name.toLowerCase().match(/\.csv$/)){showErr('CSVファイル（.csv）を選択してください');return;}
+  document.getElementById('dropText').textContent='📄 '+file.name;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var text=e.target.result.replace(/^\uFEFF/,'');
+    var lines=text.split(/\r?\n/).filter(function(l){return l.trim()!=='';});
+    if(lines.length<2){showErr('データが足りません');return;}
+    var result=[],errors=[];
+    for(var i=1;i<lines.length;i++){var cols=parseLine(lines[i]);if(cols.length<5){if(cols.length>1)errors.push(i+1);continue;}var cat=cols[0].trim(),name=cols[1].trim(),pts=parseInt(cols[2].replace(/\D/g,'')),prc=parseInt(cols[3].replace(/\D/g,'')),tim=parseInt(cols[4].replace(/\D/g,''));if(!cat||!name||isNaN(pts)||isNaN(prc)||isNaN(tim)){errors.push(i+1);continue;}result.push({category:cat,name:name,points:pts,price:prc,time:tim});}
+    if(!result.length){showErr('有効なデータがありません');return;}
+    parsedCSV=result;showPreview(result,errors);
+  };
+  reader.readAsText(file,'UTF-8');
+}
+function showErr(msg){var el=document.getElementById('csvError');el.textContent=msg;el.style.display='block';document.getElementById('csvPreview').style.display='none';document.getElementById('importBtn').disabled=true;}
+function showPreview(data,errors){document.getElementById('csvError').style.display='none';document.getElementById('previewCount').textContent=data.length+'件を読み込みました'+(errors.length?' （'+errors.length+'件スキップ）':'');document.getElementById('previewBody').innerHTML=data.slice(0,30).map(function(m){return'<tr><td>'+esc(m.category)+'</td><td>'+esc(m.name)+'</td><td>'+m.points+'pt</td><td>¥'+m.price.toLocaleString()+'</td><td>'+m.time+'分</td></tr>';}).join('');document.getElementById('csvPreview').style.display='block';document.getElementById('importBtn').disabled=false;}
+function executeImport(){if(!parsedCSV.length)return;menuData=parsedCSV;selCat=null;searchQ='';visit1=[];visit2=[];closeModal();renderCats();renderMenu();renderSelected();renderResult();}
+(function(){
+  document.getElementById('editToggle').addEventListener('click',toggleEdit);
+  document.getElementById('csvOpenBtn').addEventListener('click',openModal);
+  document.getElementById('csvCancelBtn').addEventListener('click',closeModal);
+  document.getElementById('importBtn').addEventListener('click',executeImport);
+  document.getElementById('csvModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+  var dz=document.getElementById('dropZone');
+  dz.addEventListener('click',function(){document.getElementById('csvFileInput').click();});
+  dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('dragover');});
+  dz.addEventListener('dragleave',function(){dz.classList.remove('dragover');});
+  dz.addEventListener('drop',function(e){e.preventDefault();dz.classList.remove('dragover');if(e.dataTransfer.files[0])processFile(e.dataTransfer.files[0]);});
+  document.getElementById('csvFileInput').addEventListener('change',function(e){if(e.target.files[0])processFile(e.target.files[0]);});
+  document.getElementById('tab1').addEventListener('click',function(){activeVisit=1;this.className='visit-tab active';document.getElementById('tab2').className='visit-tab';});
+  document.getElementById('tab2').addEventListener('click',function(){activeVisit=2;this.className='visit-tab active';document.getElementById('tab1').className='visit-tab';});
+  document.getElementById('searchInput').addEventListener('input',function(){searchQ=this.value;renderMenu();});
+  document.getElementById('catWrap').addEventListener('click',function(e){var b=e.target.closest('.cat-btn');if(!b)return;selCat=b.dataset.cat===''?null:b.dataset.cat;renderCats();renderMenu();});
+  document.getElementById('menuList').addEventListener('click',function(e){if(editMode){handleEditClick(e);return;}var item=e.target.closest('[data-idx]');if(!item)return;addMenu(parseInt(item.dataset.idx));});
+  document.getElementById('menuList').addEventListener('input',function(e){if(editMode)handleEditInput(e);});
+  document.getElementById('selectedArea').addEventListener('click',function(e){var b=e.target.closest('.rm-btn');if(!b)return;removeMenu(parseFloat(b.dataset.uid),parseInt(b.dataset.visit));});
+  document.getElementById('resultPanel').addEventListener('click',function(e){if(e.target&&e.target.id==='clearBtn')clearAll();});
+  // コース設定モーダル
+  function openCourseModal(){
+    var html='<div class="cr-head"><span>コース名</span><span>ポイント</span><span>料金(円)</span></div>';
+    courses.forEach(function(c,i){
+      html+='<div class="course-row"><div class="course-row-label">'+esc(c.name)+'</div><input type="number" min="1" data-ci="'+i+'" data-field="points" value="'+c.points+'"><input type="number" min="0" data-ci="'+i+'" data-field="fee" value="'+c.fee+'"></div>';
+    });
+    document.getElementById('courseRows').innerHTML=html;
+    document.getElementById('courseModal').style.display='flex';
+  }
+  function closeCourseModal(){document.getElementById('courseModal').style.display='none';}
+  function saveCourses(){
+    var inputs=document.querySelectorAll('#courseRows input');
+    inputs.forEach(function(inp){
+      var i=parseInt(inp.dataset.ci),f=inp.dataset.field,v=parseInt(inp.value)||0;
+      courses[i][f]=v;
+    });
+    localStorage.setItem('aisCourses',JSON.stringify(courses));
+    closeCourseModal();
+    renderResult();
+  }
+  document.getElementById('courseSettingBtn').addEventListener('click',openCourseModal);
+  document.getElementById('courseCancelBtn').addEventListener('click',closeCourseModal);
+  document.getElementById('courseModal').addEventListener('click',function(e){if(e.target===this)closeCourseModal();});
+  document.getElementById('courseResetBtn').addEventListener('click',function(){
+    courses=JSON.parse(JSON.stringify(defaultCourses));
+    localStorage.removeItem('aisCourses');
+    closeCourseModal();
+    renderResult();
+  });
+  document.getElementById('courseSaveBtn').addEventListener('click',saveCourses);
+})();
+renderCats();renderMenu();renderSelected();renderResult();
+</script>
+</body>
+</html>
