@@ -49,32 +49,31 @@
     /* ===== LAYOUT ===== */
     .app{display:grid;grid-template-columns:300px 1fr 296px;height:calc(100vh - 62px);}
     @media(max-width:900px){
-      .app{grid-template-columns:1fr;height:auto;}
+      .app{grid-template-columns:1fr;height:auto;padding-top:106px;padding-bottom:72px;}
       /* モバイル: パネルをタブ切り替え */
-      .panel{display:none;min-height:calc(100vh - 62px - 56px - 68px);}
+      .panel{display:none;}
       .panel.mobile-active{display:block;}
-      /* ボトムナビ */
+      /* タブナビ */
       .mobile-nav{display:flex;position:fixed;top:62px;left:0;right:0;z-index:150;background:var(--grad-header);border-bottom:2px solid var(--s3);box-shadow:0 2px 8px rgba(88,78,71,.1);}
-      .mnav-btn{flex:1;padding:10px 4px 8px;font-size:10px;font-weight:600;color:var(--s4);cursor:pointer;border:none;background:transparent;font-family:'Noto Sans JP',sans-serif;letter-spacing:.5px;transition:all .14s;display:flex;flex-direction:column;align-items:center;gap:3px;border-bottom:2px solid transparent;margin-bottom:-2px;}
+      .mnav-btn{flex:1;padding:8px 4px 6px;font-size:10px;font-weight:600;color:var(--s4);cursor:pointer;border:none;background:transparent;font-family:'Noto Sans JP',sans-serif;letter-spacing:.5px;transition:all .14s;display:flex;flex-direction:column;align-items:center;gap:2px;border-bottom:3px solid transparent;margin-bottom:-2px;}
       .mnav-btn.active{color:var(--s6);border-bottom-color:var(--s5);}
-      .mnav-btn .mnav-icon{font-size:16px;line-height:1;}
-      /* パネルのsticky位置をナビ分ずらす */
-      .mobile-active .panel-hd{top:98px;}
-      .mobile-active .cat-wrap{top:141px;}
-      .mobile-active .search-wrap{top:177px;}
-      .mobile-active .visit-tabs{top:141px;}
+      .mnav-btn .mnav-icon{font-size:15px;line-height:1;}
+      /* sticky位置: ヘッダー62px + ナビ44px = 106px */
+      .panel-hd{top:106px;}
+      .cat-wrap{top:149px;}
+      .search-wrap{top:185px;}
+      .visit-tabs{top:149px;}
       /* ボトムバー */
       .mobile-bottom-bar{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--grad-header);border-top:1px solid var(--s3);box-shadow:0 -4px 20px rgba(88,78,71,.15);align-items:center;padding:10px 16px 14px;gap:12px;backdrop-filter:blur(10px);}
       .mbb-pts{display:flex;flex-direction:column;align-items:center;min-width:56px;}
-      .mbb-pts-num{font-size:30px;font-weight:900;color:var(--s6);line-height:1;}
+      .mbb-pts-num{font-size:28px;font-weight:900;color:var(--s6);line-height:1;}
       .mbb-pts-label{font-size:8px;font-weight:700;letter-spacing:2px;color:var(--s4);text-transform:uppercase;margin-top:1px;}
-      .mbb-divider{width:1px;height:38px;background:var(--s3);flex-shrink:0;}
-      .mbb-course{flex:1;min-width:0;cursor:pointer;}
+      .mbb-divider{width:1px;height:36px;background:var(--s3);flex-shrink:0;}
+      .mbb-course{flex:1;min-width:0;}
       .mbb-course-name{font-size:13px;font-weight:700;color:var(--s6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
       .mbb-course-fee{font-size:11px;color:var(--s5);margin-top:2px;}
       .mbb-empty{font-size:11px;color:var(--s4);font-weight:300;}
       .mbb-clear{width:34px;height:34px;border-radius:50%;border:1px solid var(--s3);background:rgba(255,255,255,.6);color:var(--s4);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .12s;}
-      .app{padding-bottom:68px;padding-top:56px;}
     }
     @media(min-width:901px){.mobile-bottom-bar{display:none;}.mobile-nav{display:none;}}
     .panel{overflow-y:auto;border-right:1px solid var(--s3);}
