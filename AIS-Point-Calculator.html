@@ -222,6 +222,23 @@
     ::-webkit-scrollbar{width:3px;}
     ::-webkit-scrollbar-track{background:transparent;}
     ::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px;}
+
+    /* ===== MOBILE BOTTOM BAR ===== */
+    @media(max-width:900px){
+      .mobile-bottom-bar{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--grad-header);border-top:1px solid var(--s3);box-shadow:0 -4px 20px rgba(88,78,71,.15);align-items:center;padding:10px 16px 14px;gap:12px;backdrop-filter:blur(10px);}
+      .mbb-pts{display:flex;flex-direction:column;align-items:center;min-width:56px;}
+      .mbb-pts-num{font-size:30px;font-weight:900;color:var(--s6);line-height:1;}
+      .mbb-pts-label{font-size:8px;font-weight:700;letter-spacing:2px;color:var(--s4);text-transform:uppercase;margin-top:1px;}
+      .mbb-divider{width:1px;height:38px;background:var(--s3);flex-shrink:0;}
+      .mbb-course{flex:1;min-width:0;}
+      .mbb-course-name{font-size:13px;font-weight:700;color:var(--s6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+      .mbb-course-fee{font-size:11px;color:var(--s5);margin-top:2px;}
+      .mbb-empty{font-size:11px;color:var(--s4);font-weight:300;}
+      .mbb-clear{width:34px;height:34px;border-radius:50%;border:1px solid var(--s3);background:rgba(255,255,255,.6);color:var(--s4);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .12s;}
+      .mbb-clear:hover{background:var(--s2);color:var(--s6);}
+      .app{padding-bottom:72px;}
+    }
+    @media(min-width:901px){.mobile-bottom-bar{display:none;}}
   </style>
 </head>
 <body>
@@ -277,6 +294,7 @@
   </div>
 </div>
 
+<div class="mobile-bottom-bar" id="mobileBottomBar"><div class="mbb-pts"><div class="mbb-pts-num" id="mbbPts">0</div><div class="mbb-pts-label">pt</div></div><div class="mbb-divider"></div><div class="mbb-course" id="mbbCourse"><div class="mbb-empty">メニューを選んでください</div></div><button class="mbb-clear" id="mbbClear">&#215;</button></div>
 <div class="app">
   <div class="panel panel-left">
     <div class="panel-hd"><span>メニューを選ぶ</span><button class="edit-toggle" id="editToggle">編集</button></div>
@@ -419,6 +437,7 @@ function renderResult(){
   h+='<button class="clear-btn" id="clearBtn">すべてクリア</button>';
   el.innerHTML=h;
 }
+function updateMobileBar(){var total=[].concat(visit1,visit2).reduce(function(s,m){return s+m.points;},0);document.getElementById('mbbPts').textContent=total;var courseEl=document.getElementById('mbbCourse');if(!total){courseEl.innerHTML='<div class="mbb-empty">メニューを選んでください</div>';return;}var rec=courses[courses.length-1];for(var i=0;i<courses.length;i++){if(courses[i].points>=total){rec=courses[i];break;}}courseEl.innerHTML='<div class="mbb-course-name">おすすめ: '+rec.name+'</div><div class="mbb-course-fee">¥'+rec.fee.toLocaleString()+'/月</div>';}
 function addMenu(i){var m=Object.assign({},menuData[i],{uid:Date.now()+Math.random()});if(activeVisit===1)visit1.push(m);else visit2.push(m);renderSelected();renderResult();renderMenu();}
 function removeMenu(uid,v){if(v===1)visit1=visit1.filter(function(m){return m.uid!==uid;});else visit2=visit2.filter(function(m){return m.uid!==uid;});renderSelected();renderResult();renderMenu();}
 function clearAll(){visit1=[];visit2=[];renderSelected();renderResult();renderMenu();}
@@ -449,7 +468,7 @@ function processFile(file){
 }
 function showErr(msg){var el=document.getElementById('csvError');el.textContent=msg;el.style.display='block';document.getElementById('csvPreview').style.display='none';document.getElementById('importBtn').disabled=true;}
 function showPreview(data,errors){document.getElementById('csvError').style.display='none';document.getElementById('previewCount').textContent=data.length+'件を読み込みました'+(errors.length?' （'+errors.length+'件スキップ）':'');document.getElementById('previewBody').innerHTML=data.slice(0,30).map(function(m){return'<tr><td>'+esc(m.category)+'</td><td>'+esc(m.name)+'</td><td>'+m.points+'pt</td><td>¥'+m.price.toLocaleString()+'</td><td>'+m.time+'分</td></tr>';}).join('');document.getElementById('csvPreview').style.display='block';document.getElementById('importBtn').disabled=false;}
-function executeImport(){if(!parsedCSV.length)return;menuData=parsedCSV;selCat=null;searchQ='';visit1=[];visit2=[];closeModal();renderCats();renderMenu();renderSelected();renderResult();}
+function executeImport(){if(!parsedCSV.length)return;menuData=parsedCSV;selCat=null;searchQ='';visit1=[];visit2=[];closeModal();renderCats();renderMenu();renderSelected();renderResult();updateMobileBar();}
 (function(){
   document.getElementById('editToggle').addEventListener('click',toggleEdit);
   document.getElementById('csvOpenBtn').addEventListener('click',openModal);
@@ -470,6 +489,7 @@ function executeImport(){if(!parsedCSV.length)return;menuData=parsedCSV;selCat=n
   document.getElementById('menuList').addEventListener('input',function(e){if(editMode)handleEditInput(e);});
   document.getElementById('selectedArea').addEventListener('click',function(e){var b=e.target.closest('.rm-btn');if(!b)return;removeMenu(parseFloat(b.dataset.uid),parseInt(b.dataset.visit));});
   document.getElementById('resultPanel').addEventListener('click',function(e){if(e.target&&e.target.id==='clearBtn')clearAll();});
+  document.getElementById('mbbClear').addEventListener('click',clearAll);
   // コース設定モーダル
   function openCourseModal(){
     var html='<div class="cr-head"><span>コース名</span><span>ポイント</span><span>料金(円)</span></div>';
