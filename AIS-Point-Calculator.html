@@ -456,7 +456,7 @@ function updateMobileBar(){
 function addMenu(i){var m=Object.assign({},menuData[i],{uid:Date.now()+Math.random()});if(activeVisit===1)visit1.push(m);else visit2.push(m);renderSelected();renderResult();renderMenu();}
 function removeMenu(uid,v){if(v===1)visit1=visit1.filter(function(m){return m.uid!==uid;});else visit2=visit2.filter(function(m){return m.uid!==uid;});renderSelected();renderResult();renderMenu();}
 function clearAll(){visit1=[];visit2=[];renderSelected();renderResult();renderMenu();}
-function toggleEdit(){editMode=!editMode;var b=document.getElementById('editToggle');b.textContent=editMode?'完了':'編集';b.className='edit-toggle'+(editMode?' on':'');document.getElementById('searchWrap').style.display=editMode?'none':'block';renderMenu();}
+function toggleEdit(){editMode=!editMode;var b=document.getElementById('editToggle');b.textContent=editMode?'完了':'編集';b.className='edit-toggle'+(editMode?' on':'');document.getElementById('searchWrap').style.display=editMode?'none':'block';renderMenu();if(!editMode){var sb=document.getElementById('ghSaveBtn');if(sb)sb.style.display='inline-block';}}
 function handleEditInput(e){var el=e.target;if(!el.classList.contains('ef'))return;var i=parseInt(el.dataset.idx),f=el.dataset.field,v=el.value;if(f==='name')menuData[i].name=v;else if(f==='price')menuData[i].price=parseInt(v)||0;else if(f==='time')menuData[i].time=parseInt(v)||0;else if(f==='points')menuData[i].points=parseInt(v)||0;}
 function handleEditClick(e){
   var d=e.target.closest('[data-del]');if(d){menuData.splice(parseInt(d.dataset.del),1);renderMenu();return;}
