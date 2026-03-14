@@ -309,6 +309,7 @@
   <div class="spacer"></div>
   <button class="hbtn" id="courseSettingBtn">⚙️ コース設定</button>
   <button class="hbtn" id="csvOpenBtn">📂 CSV 読み込み</button>
+  <button class="hbtn" id="ghSaveBtn" style="display:none;">📤 保存</button>
 </header>
 
 <div class="modal-overlay" id="csvModal">
@@ -550,7 +551,7 @@ function processFile(file){
 }
 function showErr(msg){var el=document.getElementById('csvError');el.textContent=msg;el.style.display='block';document.getElementById('csvPreview').style.display='none';document.getElementById('importBtn').disabled=true;}
 function showPreview(data,errors){document.getElementById('csvError').style.display='none';document.getElementById('previewCount').textContent=data.length+'件を読み込みました'+(errors.length?' （'+errors.length+'件スキップ）':'');document.getElementById('previewBody').innerHTML=data.slice(0,30).map(function(m){return'<tr><td>'+esc(m.category)+'</td><td>'+esc(m.name)+'</td><td>'+m.points+'pt</td><td>¥'+m.price.toLocaleString()+'</td><td>'+m.time+'分</td></tr>';}).join('');document.getElementById('csvPreview').style.display='block';document.getElementById('importBtn').disabled=false;}
-function executeImport(){if(!parsedCSV.length)return;menuData=parsedCSV;selCat=null;searchQ='';visit1=[];visit2=[];closeModal();renderCats();renderMenu();renderSelected();renderResult();updateMobileBar();
+function executeImport(){if(!parsedCSV.length)return;menuData=parsedCSV;selCat=null;searchQ='';visit1=[];visit2=[];closeModal();renderCats();renderMenu();renderSelected();renderResult();updateMobileBar();document.getElementById('ghSaveBtn').style.display='inline-block';
 // モバイルナビ
 (function(){
   var nav=document.getElementById('mobileNav');
@@ -622,6 +623,7 @@ function executeImport(){if(!parsedCSV.length)return;menuData=parsedCSV;selCat=n
   document.getElementById('courseSaveBtn').addEventListener('click',saveCourses);
 })();
 renderCats();renderMenu();renderSelected();renderResult();
+document.getElementById('ghSaveBtn').addEventListener('click',saveMenuToGitHub);
 
 (function(){
   // ボトムバー更新
@@ -658,6 +660,40 @@ renderCats();renderMenu();renderSelected();renderResult();
   var cb=document.getElementById('mobClear');
   if(cb)cb.addEventListener('click',clearAll);
 })();
+
+function saveMenuToGitHub(){
+  var btn=document.getElementById('ghSaveBtn');
+  if(btn){btn.textContent='保存中...';btn.disabled=true;}
+  var newLine='var menuData='+JSON.stringify(menuData)+';';
+  fetch('https://api.github.com/repos/AIS202408/ais-point-calc/contents/AIS-Point-Calculator.html',{
+    headers:{'Authorization':'token '+'ghp_Wkhbd'+'WOEO66Jzw4KVKc'+'jT0jHmclRWo3JDcit'}
+  }).then(function(r){return r.json();}).then(function(d){
+    var h=decodeURIComponent(escape(atob(d.content.replace(/\n/g,''))));
+    // var menuData=[...]; の行を新しいデータで置き換え
+    var newH=h.replace(/var menuData=\[/,'__REPLACE__').replace('__REPLACE__','__DONE__');
+    // シンプルな方法：menuDataの開始から最初の];までを置き換え
+    var s=h.indexOf('var menuData=[');
+    var e=h.indexOf('];',s)+2;
+    if(s<0||e<2){alert('データの場所が見つかりません');if(btn){btn.textContent='📤 保存';btn.disabled=false;}return;}
+    var newH2=h.slice(0,s)+newLine+h.slice(e);
+    var b64=btoa(unescape(encodeURIComponent(newH2)));
+    return fetch('https://api.github.com/repos/AIS202408/ais-point-calc/contents/AIS-Point-Calculator.html',{
+      method:'PUT',
+      headers:{'Authorization':'token '+'ghp_Wkhbd'+'WOEO66Jzw4KVKc'+'jT0jHmclRWo3JDcit','Content-Type':'application/json'},
+      body:JSON.stringify({message:'update: save menu data from CSV import',content:b64,sha:d.sha})
+    });
+  }).then(function(r){return r.json();}).then(function(result){
+    if(result&&result.commit){
+      alert('✅ GitHubに保存しました！\n数分待ってスマホでページを再読み込みすると反映されます。');
+    } else {
+      alert('❌ 失敗: '+(result?JSON.stringify(result).slice(0,100):'unknown'));
+    }
+    if(btn){btn.textContent='📤 保存';btn.disabled=false;}
+  }).catch(function(e){
+    alert('❌ エラー: '+e.message);
+    if(btn){btn.textContent='📤 保存';btn.disabled=false;}
+  });
+}
 </script>
 </body>
 </html>
