@@ -469,27 +469,18 @@ function renderResult(){
   h+='<button class="clear-btn" id="clearBtn">すべてクリア</button>';
   el.innerHTML=h;
 }
-function updateMobileBar(){  // ナビバッジ更新  var selCount=visit1.length+visit2.length;  var mnav1=document.getElementById('mnav1');  if(mnav1){mnav1.innerHTML='<span class="mnav-icon">'+(selCount>0?'<span style="background:var(--grad-active);color:var(--s0);border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;">'+selCount+'</span>':'✓')+'</span>選択中';}var total=[].concat(visit1,visit2).reduce(function(s,m){return s+m.points;},0);document.getElementById('mbbPts').textContent=total;var courseEl=document.getElementById('mbbCourse');if(!total){courseEl.innerHTML='<div class="mbb-empty">メニューを選んでください</div>';return;}var rec=courses[courses.length-1];for(var i=0;i<courses.length;i++){if(courses[i].points>=total){rec=courses[i];break;}}courseEl.innerHTML='<div class="mbb-course-name">おすすめ: '+rec.name+'</div><div class="mbb-course-fee">¥'+rec.fee.toLocaleString()+'/月</div>';}
-
-// モバイルナビ切り替え
-(function(){
-  function isMobile(){return window.innerWidth<=900;}
-  function switchPanel(idx){
-    if(!isMobile())return;
-    for(var i=0;i<3;i++){
-      var p=document.getElementById('mobilePanel'+i);
-      var b=document.getElementById('mnav'+i);
-      if(p)p.classList.toggle('mobile-active',i===idx);
-      if(b)b.classList.toggle('active',i===idx);
-    }
-  }
-  document.getElementById('mobileNav').addEventListener('click',function(e){
-    var btn=e.target.closest('[data-panel]');
-    if(!btn)return;
-    switchPanel(parseInt(btn.dataset.panel));
-  });
-  // 選択時に「選択中」タブへ自動切り替えしない（ユーザーが明示的に切り替え）
-})();
+function updateMobileBar(){
+  var total=[].concat(visit1,visit2).reduce(function(s,m){return s+m.points;},0);
+  document.getElementById('mbbPts').textContent=total;
+  var courseEl=document.getElementById('mbbCourse');
+  if(!total){courseEl.innerHTML='<div class="mbb-empty">メニューを選んでください</div>';return;}
+  var rec=courses[courses.length-1];
+  for(var i=0;i<courses.length;i++){if(courses[i].points>=total){rec=courses[i];break;}}
+  courseEl.innerHTML='<div class="mbb-course-name">おすすめ: '+rec.name+'</div><div class="mbb-course-fee">¥'+rec.fee.toLocaleString()+'/月</div>';
+  var selCount=visit1.length+visit2.length;
+  var mnav1=document.getElementById('mnav1');
+  if(mnav1){var icon=selCount>0?'('+selCount+')':'';mnav1.querySelector('.mnav-icon').textContent=icon||'✓';}
+}
 function addMenu(i){var m=Object.assign({},menuData[i],{uid:Date.now()+Math.random()});if(activeVisit===1)visit1.push(m);else visit2.push(m);renderSelected();renderResult();renderMenu();}
 function removeMenu(uid,v){if(v===1)visit1=visit1.filter(function(m){return m.uid!==uid;});else visit2=visit2.filter(function(m){return m.uid!==uid;});renderSelected();renderResult();renderMenu();}
 function clearAll(){visit1=[];visit2=[];renderSelected();renderResult();renderMenu();}
