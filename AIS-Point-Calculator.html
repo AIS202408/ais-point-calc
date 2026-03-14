@@ -266,6 +266,36 @@
       .app{padding-bottom:72px;}
     }
     @media(min-width:901px){.mobile-bottom-bar{display:none;}}
+
+    /* ===== MOBILE ONLY ===== */
+    @media(max-width:900px){
+      .mob-nav{display:flex;position:fixed;top:62px;left:0;right:0;z-index:150;background:var(--grad-header);border-bottom:2px solid var(--s3);}
+      .mob-tab{flex:1;padding:9px 4px 7px;font-size:10px;font-weight:600;color:var(--s4);cursor:pointer;border:none;background:transparent;font-family:'Noto Sans JP',sans-serif;display:flex;flex-direction:column;align-items:center;gap:2px;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .14s;}
+      .mob-tab.on{color:var(--s6);border-bottom-color:var(--s5);}
+      .mob-tab-icon{font-size:14px;line-height:1;}
+      .panel{display:none;}
+      .panel.mob-show{display:block;}
+      .panel-hd{top:106px;}
+      .cat-wrap{top:149px;}
+      .search-wrap{top:185px;}
+      .visit-tabs{top:149px;}
+      .app{padding-top:106px;padding-bottom:70px;}
+      .mob-bar{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--grad-header);border-top:1px solid var(--s3);box-shadow:0 -3px 16px rgba(88,78,71,.14);align-items:center;padding:9px 16px 13px;gap:10px;}
+      .mob-bar-pts{display:flex;flex-direction:column;align-items:center;min-width:54px;}
+      .mob-bar-num{font-size:28px;font-weight:900;color:var(--s6);line-height:1;}
+      .mob-bar-label{font-size:8px;font-weight:700;letter-spacing:2px;color:var(--s4);text-transform:uppercase;}
+      .mob-bar-div{width:1px;height:36px;background:var(--s3);flex-shrink:0;}
+      .mob-bar-info{flex:1;min-width:0;}
+      .mob-bar-course{font-size:13px;font-weight:700;color:var(--s6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+      .mob-bar-fee{font-size:11px;color:var(--s5);margin-top:2px;}
+      .mob-bar-empty{font-size:11px;color:var(--s4);}
+      .mob-bar-clear{width:34px;height:34px;border-radius:50%;border:1px solid var(--s3);background:rgba(255,255,255,.6);color:var(--s4);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+    }
+    @media(min-width:901px){
+      .mob-nav{display:none;}
+      .mob-bar{display:none;}
+      .panel{display:block !important;}
+    }
   </style>
 </head>
 <body>
@@ -322,24 +352,31 @@
 </div>
 
 <div class="mobile-bottom-bar" id="mobileBottomBar"><div class="mbb-pts"><div class="mbb-pts-num" id="mbbPts">0</div><div class="mbb-pts-label">pt</div></div><div class="mbb-divider"></div><div class="mbb-course" id="mbbCourse"><div class="mbb-empty">メニューを選んでください</div></div><button class="mbb-clear" id="mbbClear">&#215;</button></div>
-<nav class="mobile-nav" id="mobileNav">
-  <button class="mnav-btn active" data-panel="0" id="mnav0"><span class="mnav-icon">☰</span>メニュー</button>
-  <button class="mnav-btn" data-panel="1" id="mnav1"><span class="mnav-icon">✓</span>選択中</button>
-  <button class="mnav-btn" data-panel="2" id="mnav2"><span class="mnav-icon">★</span>計算結果</button>
+
+<nav class="mob-nav" id="mobNav">
+  <button class="mob-tab on" data-panel="0"><span class="mob-tab-icon">☰</span>メニュー</button>
+  <button class="mob-tab" data-panel="1"><span class="mob-tab-icon">✓</span>選択中</button>
+  <button class="mob-tab" data-panel="2"><span class="mob-tab-icon">★</span>計算結果</button>
 </nav>
+<div class="mob-bar" id="mobBar">
+  <div class="mob-bar-pts"><div class="mob-bar-num" id="mobPts">0</div><div class="mob-bar-label">pt</div></div>
+  <div class="mob-bar-div"></div>
+  <div class="mob-bar-info" id="mobInfo"><div class="mob-bar-empty">メニューを選んでください</div></div>
+  <button class="mob-bar-clear" id="mobClear">&#215;</button>
+</div>
 <div class="app">
-  <div class="panel panel-left mobile-active" id="mobilePanel0">
+  <div class="panel panel-left mob-show" id="mobPanel0">
     <div class="panel-hd"><span>メニューを選ぶ</span><button class="edit-toggle" id="editToggle">編集</button></div>
     <div class="cat-wrap" id="catWrap"></div>
     <div class="search-wrap" id="searchWrap"><input class="search-input" type="text" placeholder="メニューを検索..." id="searchInput"></div>
     <div id="menuList"></div>
   </div>
-  <div class="panel panel-mid" id="mobilePanel1">
+  <div class="panel panel-mid" id="mobPanel1">
     <div class="panel-hd"><span>選択中のメニュー</span></div>
     <div class="visit-tabs"><button class="visit-tab active" id="tab1">1 回 目</button><button class="visit-tab" id="tab2">2 回 目</button></div>
     <div class="selected-area" id="selectedArea"></div>
   </div>
-  <div class="panel panel-right" id="mobilePanel2">
+  <div class="panel panel-right" id="mobPanel2">
     <div class="panel-hd"><span>計算結果</span></div>
     <div class="result-inner" id="resultPanel"></div>
   </div>
@@ -585,6 +622,42 @@ function executeImport(){if(!parsedCSV.length)return;menuData=parsedCSV;selCat=n
   document.getElementById('courseSaveBtn').addEventListener('click',saveCourses);
 })();
 renderCats();renderMenu();renderSelected();renderResult();
+
+(function(){
+  // ボトムバー更新
+  function updateMobBar(){
+    var total=[].concat(visit1,visit2).reduce(function(s,m){return s+m.points;},0);
+    var ptsEl=document.getElementById('mobPts');
+    if(ptsEl)ptsEl.textContent=total;
+    var infoEl=document.getElementById('mobInfo');
+    if(!infoEl)return;
+    if(!total){
+      infoEl.innerHTML='<div class="mob-bar-empty">メニューを選んでください</div>';
+      return;
+    }
+    var rec=courses[courses.length-1];
+    for(var i=0;i<courses.length;i++){if(courses[i].points>=total){rec=courses[i];break;}}
+    infoEl.innerHTML='<div class="mob-bar-course">おすすめ: '+rec.name+'</div><div class="mob-bar-fee">¥'+rec.fee.toLocaleString()+'/月</div>';
+  }
+  updateMobBar();
+  // resultPanel変化を監視
+  var rp=document.getElementById('resultPanel');
+  if(rp)new MutationObserver(updateMobBar).observe(rp,{childList:true,subtree:true});
+  // ナビタブ切り替え
+  var nav=document.getElementById('mobNav');
+  if(nav){
+    nav.addEventListener('click',function(e){
+      var btn=e.target.closest('[data-panel]');
+      if(!btn)return;
+      var idx=parseInt(btn.getAttribute('data-panel'));
+      document.querySelectorAll('.mob-tab').forEach(function(b,i){b.classList.toggle('on',i===idx);});
+      for(var i=0;i<3;i++){var p=document.getElementById('mobPanel'+i);if(p)p.classList.toggle('mob-show',i===idx);}
+    });
+  }
+  // クリアボタン
+  var cb=document.getElementById('mobClear');
+  if(cb)cb.addEventListener('click',clearAll);
+})();
 </script>
 </body>
 </html>
