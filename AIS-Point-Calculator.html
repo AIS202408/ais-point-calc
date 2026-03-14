@@ -471,15 +471,17 @@ function renderResult(){
 }
 function updateMobileBar(){
   var total=[].concat(visit1,visit2).reduce(function(s,m){return s+m.points;},0);
-  document.getElementById('mbbPts').textContent=total;
+  var ptsEl=document.getElementById('mbbPts');
+  if(ptsEl)ptsEl.textContent=total;
   var courseEl=document.getElementById('mbbCourse');
-  if(!total){courseEl.innerHTML='<div class="mbb-empty">メニューを選んでください</div>';return;}
+  if(!courseEl)return;
+  if(!total){
+    courseEl.innerHTML='<div class=\'mbb-empty\'>メニューを選んでください</div>';
+    return;
+  }
   var rec=courses[courses.length-1];
   for(var i=0;i<courses.length;i++){if(courses[i].points>=total){rec=courses[i];break;}}
-  courseEl.innerHTML='<div class="mbb-course-name">おすすめ: '+rec.name+'</div><div class="mbb-course-fee">¥'+rec.fee.toLocaleString()+'/月</div>';
-  var selCount=visit1.length+visit2.length;
-  var mnav1=document.getElementById('mnav1');
-  if(mnav1){var icon=selCount>0?'('+selCount+')':'';mnav1.querySelector('.mnav-icon').textContent=icon||'✓';}
+  courseEl.innerHTML='<div class=\'mbb-course-name\'>おすすめ: '+rec.name+'</div><div class=\'mbb-course-fee\'>\u00a5'+rec.fee.toLocaleString()+'/月</div>';
 }
 function addMenu(i){var m=Object.assign({},menuData[i],{uid:Date.now()+Math.random()});if(activeVisit===1)visit1.push(m);else visit2.push(m);renderSelected();renderResult();renderMenu();}
 function removeMenu(uid,v){if(v===1)visit1=visit1.filter(function(m){return m.uid!==uid;});else visit2=visit2.filter(function(m){return m.uid!==uid;});renderSelected();renderResult();renderMenu();}
@@ -511,7 +513,25 @@ function processFile(file){
 }
 function showErr(msg){var el=document.getElementById('csvError');el.textContent=msg;el.style.display='block';document.getElementById('csvPreview').style.display='none';document.getElementById('importBtn').disabled=true;}
 function showPreview(data,errors){document.getElementById('csvError').style.display='none';document.getElementById('previewCount').textContent=data.length+'件を読み込みました'+(errors.length?' （'+errors.length+'件スキップ）':'');document.getElementById('previewBody').innerHTML=data.slice(0,30).map(function(m){return'<tr><td>'+esc(m.category)+'</td><td>'+esc(m.name)+'</td><td>'+m.points+'pt</td><td>¥'+m.price.toLocaleString()+'</td><td>'+m.time+'分</td></tr>';}).join('');document.getElementById('csvPreview').style.display='block';document.getElementById('importBtn').disabled=false;}
-function executeImport(){if(!parsedCSV.length)return;menuData=parsedCSV;selCat=null;searchQ='';visit1=[];visit2=[];closeModal();renderCats();renderMenu();renderSelected();renderResult();updateMobileBar();}
+function executeImport(){if(!parsedCSV.length)return;menuData=parsedCSV;selCat=null;searchQ='';visit1=[];visit2=[];closeModal();renderCats();renderMenu();renderSelected();renderResult();updateMobileBar();
+// モバイルナビ
+(function(){
+  var nav=document.getElementById('mobileNav');
+  if(!nav)return;
+  nav.addEventListener('click',function(e){
+    var btn=e.target.closest('[data-panel]');
+    if(!btn)return;
+    var idx=parseInt(btn.getAttribute('data-panel'));
+    for(var i=0;i<3;i++){
+      var p=document.getElementById('mobilePanel'+i);
+      var b=document.getElementById('mnav'+i);
+      if(p){if(i===idx){p.classList.add('mobile-active');}else{p.classList.remove('mobile-active');}}
+      if(b){if(i===idx){b.classList.add('active');}else{b.classList.remove('active');}}
+    }
+  });
+  var mbbClear=document.getElementById('mbbClear');
+  if(mbbClear)mbbClear.addEventListener('click',clearAll);
+})();}
 (function(){
   document.getElementById('editToggle').addEventListener('click',toggleEdit);
   document.getElementById('csvOpenBtn').addEventListener('click',openModal);
